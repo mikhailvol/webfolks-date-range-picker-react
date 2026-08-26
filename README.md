@@ -256,6 +256,11 @@ npm run build     # tsup → dist (ESM + CJS + d.ts) + styles.css
 cd demo && npm install && npm run dev   # Next.js App Router demo on :3999
 ```
 
+## Credits
+
+Built by [WebFolks.io](https://www.webfolks.io/) — a React port of our vanilla-JS
+[WebFolks Date Range Picker](https://github.com/mikhailvol/webfolks-date-range-picker) for Webflow.
+
 ## License
 
-[MIT](LICENSE.md)
+[MIT](LICENSE.md) — free to use in commercial and private projects; keep the copyright notice with the code.
