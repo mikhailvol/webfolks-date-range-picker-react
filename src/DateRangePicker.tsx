@@ -22,6 +22,7 @@ import {
   addMonthsClamped,
   addMonthsToMonth,
   applyDaySelection,
+  applySingleDaySelection,
   clampDate,
   compareMonth,
   computeBounds,
@@ -45,6 +46,7 @@ import {
   defaultStrings,
   type DateRange,
   type DateRangePickerProps,
+  type DateRangePickerRangeProps,
   type DateRangePickerRef,
 } from "./types";
 
@@ -57,12 +59,9 @@ const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayout
 export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerProps>(
   function DateRangePicker(props, ref) {
     const {
-      value,
-      defaultValue,
-      onChange,
-      onPartialChange,
       onOpenChange,
       onBlur,
+      months = 2,
       minNights = 1,
       disablePast = true,
       maxYearsFuture = 2,
@@ -89,11 +88,18 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
       classNames,
       style,
     } = props;
+    const mode = props.mode ?? "range";
+    /** Single-date mode is a 0-night "range" internally: start === end. */
+    const effMinNights = mode === "single" ? 0 : minNights;
 
-    const strings = useMemo(
-      () => ({ ...defaultStrings, ...stringsOverride }),
-      [stringsOverride]
-    );
+    const strings = useMemo(() => {
+      const merged = { ...defaultStrings, ...stringsOverride };
+      // Single-date mode swaps in its own CTA/title and error text so the
+      // subcomponents can stay mode-agnostic.
+      return mode === "single"
+        ? { ...merged, selectDates: merged.selectDate, errorIncomplete: merged.errorIncompleteDate }
+        : merged;
+    }, [stringsOverride, mode]);
     const resolvedLocale = useMemo(() => resolveLocale(locale), [locale]);
     const [today] = useState(() => stripTime(new Date()));
     const bounds = useMemo(
@@ -110,25 +116,38 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
     );
 
     // Committed value (what the form sees) --------------------------------
+    // Single mode exposes `Date | null` externally; internally everything is
+    // a DateRange with start === end.
+    const normalize = (v: DateRange | Date | null | undefined): DateRange =>
+      v == null
+        ? EMPTY_RANGE
+        : v instanceof Date
+          ? { start: stripTime(v), end: stripTime(v) }
+          : v;
+
+    const value = props.value;
     const isControlled = value !== undefined;
-    const [internalValue, setInternalValue] = useState<DateRange>(defaultValue ?? EMPTY_RANGE);
-    const committed = isControlled ? (value ?? EMPTY_RANGE) : internalValue;
+    const [internalValue, setInternalValue] = useState<DateRange>(() =>
+      normalize(props.defaultValue)
+    );
+    const committed = isControlled ? normalize(value) : internalValue;
 
     // Working selection shown in the calendar -----------------------------
     const [draft, setDraft] = useState<DateRange>(committed);
 
     // External value updates (form reset, programmatic set) re-seed the draft.
-    const prevValueRef = useRef<DateRange | undefined>(value);
+    const prevValueRef = useRef<DateRange | Date | null | undefined>(value);
     useEffect(() => {
       if (isControlled) {
-        const prev = prevValueRef.current ?? EMPTY_RANGE;
-        const next = value ?? EMPTY_RANGE;
+        const prev = normalize(prevValueRef.current);
+        const next = normalize(value);
         if (!rangesEqual(prev, next)) {
           setDraft(next);
           setInternalError(false);
         }
       }
       prevValueRef.current = value;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value, isControlled]);
 
     const [open, setOpen] = useState(false);
@@ -136,7 +155,7 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
     const isMobile = useIsMobile();
 
     const clampLeftMonth = (m: Date): Date => {
-      const lastLeft = addMonthsToMonth(bounds.maxMonth, -1);
+      const lastLeft = addMonthsToMonth(bounds.maxMonth, -(months - 1));
       const upper = compareMonth(lastLeft, bounds.minMonth) < 0 ? bounds.minMonth : lastLeft;
       if (compareMonth(m, bounds.minMonth) < 0) return bounds.minMonth;
       if (compareMonth(m, upper) > 0) return upper;
@@ -159,7 +178,7 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
     const pendingFocusRef = useRef<"cell" | "cta" | null>(null);
     const popoverId = useId();
 
-    const complete = isRangeComplete(draft, minNights);
+    const complete = isRangeComplete(draft, effMinNights);
 
     // Formatting ----------------------------------------------------------
     const fmt = (d: Date) => formatWithPattern(d, format, resolvedLocale);
@@ -169,22 +188,31 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
 
     const displaySource = commitMode === "instant" ? draft : committed;
     const displayValue =
-      displaySource.start && displaySource.end
-        ? formatRange(displaySource)
-        : commitMode === "instant" && draft.start
-          ? formatPartial(draft.start)
-          : "";
+      mode === "single"
+        ? displaySource.start
+          ? fmt(displaySource.start)
+          : ""
+        : displaySource.start && displaySource.end
+          ? formatRange(displaySource)
+          : commitMode === "instant" && draft.start
+            ? formatPartial(draft.start)
+            : "";
 
-    const footerSummary = complete
-      ? formatRange(draft) +
-        (showNights
-          ? ` (${nightsBetween(draft.start!, draft.end!)} ${
-              nightsBetween(draft.start!, draft.end!) === 1 ? strings.night : strings.nights
-            })`
-          : "")
-      : draft.start
-        ? formatPartial(draft.start)
-        : strings.selectDates;
+    const footerSummary =
+      mode === "single"
+        ? draft.start
+          ? fmt(draft.start)
+          : strings.selectDates
+        : complete
+          ? formatRange(draft) +
+            (showNights
+              ? ` (${nightsBetween(draft.start!, draft.end!)} ${
+                  nightsBetween(draft.start!, draft.end!) === 1 ? strings.night : strings.nights
+                })`
+              : "")
+          : draft.start
+            ? formatPartial(draft.start)
+            : strings.selectDates;
 
     // Error ---------------------------------------------------------------
     const externalErrorText = typeof error === "string" && error.trim() ? error : null;
@@ -199,9 +227,9 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
       if (!isMobile) {
         setLeftMonth((prev) => {
           const anchor = startOfMonth(draft.start ?? today);
-          const right = addMonthsToMonth(prev, 1);
+          const last = addMonthsToMonth(prev, months - 1);
           const visible =
-            compareMonth(anchor, prev) >= 0 && compareMonth(anchor, right) <= 0;
+            compareMonth(anchor, prev) >= 0 && compareMonth(anchor, last) <= 0;
           return visible ? prev : clampLeftMonth(anchor);
         });
       }
@@ -216,8 +244,8 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
       if (validate) {
         // Validate the working selection, as the original does: a dangling
         // start is an error; with `required`, so is anything short of complete.
-        const partial = !!(draft.start && !draft.end);
-        const requiredMissing = required && !isRangeComplete(draft, minNights);
+        const partial = mode === "range" && !!(draft.start && !draft.end);
+        const requiredMissing = required && !isRangeComplete(draft, effMinNights);
         setInternalError(partial || requiredMissing);
       }
       if (restoreFocus) {
@@ -232,23 +260,37 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
     // Commit --------------------------------------------------------------
     const commitRange = (next: DateRange) => {
       if (!isControlled) setInternalValue(next);
-      onChange?.(next);
+      if (mode === "single") {
+        (props.onChange as ((date: Date | null) => void) | undefined)?.(next.start);
+      } else {
+        (props.onChange as ((range: DateRange) => void) | undefined)?.(next);
+      }
     };
 
     // Selection -----------------------------------------------------------
     const selectDay = (date: Date, via: "pointer" | "keyboard") => {
-      if (isDateDisabled(date, bounds, draft, minNights)) return;
-      const result = applyDaySelection(draft, date, minNights);
+      if (isDateDisabled(date, bounds, draft, effMinNights)) return;
+      const result =
+        mode === "single"
+          ? applySingleDaySelection(date)
+          : applyDaySelection(draft, date, effMinNights);
       if (!result.changed) return;
 
       setDraft(result.range);
       setInternalError(false);
 
       if (!result.completed) {
-        onPartialChange?.(result.range);
+        if (mode === "range") {
+          (props as DateRangePickerRangeProps).onPartialChange?.(result.range);
+        }
       } else if (commitMode === "instant") {
         commitRange(result.range);
-        if (autoCloseFirst && openCountRef.current === 1 && !isMobile) {
+        // A classic datepicker closes on pick; ranges only via autoCloseFirst.
+        const shouldClose =
+          mode === "single"
+            ? !isMobile
+            : autoCloseFirst && openCountRef.current === 1 && !isMobile;
+        if (shouldClose) {
           closePicker(true);
           return;
         }
@@ -272,7 +314,7 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
 
     // Month navigation ----------------------------------------------------
     const canGoPrev = compareMonth(addMonthsToMonth(leftMonth, -1), bounds.minMonth) >= 0;
-    const canGoNext = compareMonth(addMonthsToMonth(leftMonth, 1), bounds.maxMonth) < 0;
+    const canGoNext = compareMonth(addMonthsToMonth(leftMonth, months), bounds.maxMonth) <= 0;
     const goPrev = () => canGoPrev && setLeftMonth(addMonthsToMonth(leftMonth, -1));
     const goNext = () => canGoNext && setLeftMonth(addMonthsToMonth(leftMonth, 1));
 
@@ -280,9 +322,9 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
       if (isMobile) return;
       setLeftMonth((prev) => {
         const m = startOfMonth(date);
-        const right = addMonthsToMonth(prev, 1);
+        const last = addMonthsToMonth(prev, months - 1);
         if (compareMonth(m, prev) < 0) return clampLeftMonth(m);
-        if (compareMonth(m, right) > 0) return clampLeftMonth(addMonthsToMonth(m, -1));
+        if (compareMonth(m, last) > 0) return clampLeftMonth(addMonthsToMonth(m, -(months - 1)));
         return prev;
       });
     };
@@ -291,7 +333,7 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
     const skipDisabled = (target: Date, dir: 1 | -1): Date | null => {
       let cursor = clampDate(target, bounds.minSelectable, bounds.maxSelectable);
       let steps = 0;
-      while (steps < MAX_SKIP_STEPS && isDateDisabled(cursor, bounds, draft, minNights)) {
+      while (steps < MAX_SKIP_STEPS && isDateDisabled(cursor, bounds, draft, effMinNights)) {
         const next = clampDate(addDays(cursor, dir), bounds.minSelectable, bounds.maxSelectable);
         if (sameDay(next, cursor)) return null; // stuck at a bound
         cursor = next;
@@ -499,7 +541,7 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
     const monthProps = {
       bounds,
       draft,
-      minNights,
+      minNights: effMinNights,
       today,
       locale: resolvedLocale,
       focusedDate,
@@ -553,16 +595,15 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
         onPrev={goPrev}
         onNext={goNext}
         strings={strings}
-        months={
-          <>
-            <CalendarMonth month={leftMonth} showWeekdays {...monthProps} />
-            <CalendarMonth
-              month={addMonthsToMonth(leftMonth, 1)}
-              showWeekdays
-              {...monthProps}
-            />
-          </>
-        }
+        singleMonth={months === 1}
+        months={Array.from({ length: months }, (_, i) => (
+          <CalendarMonth
+            key={i}
+            month={addMonthsToMonth(leftMonth, i)}
+            showWeekdays
+            {...monthProps}
+          />
+        ))}
         footer={footer}
       />
     );
@@ -628,20 +669,27 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
           }}
           onBlur={onBlur}
         />
-        {name && (
-          <>
+        {name &&
+          (mode === "single" ? (
             <input
               type="hidden"
-              name={`${name}_start`}
+              name={name}
               value={committed.start ? toISODate(committed.start) : ""}
             />
-            <input
-              type="hidden"
-              name={`${name}_end`}
-              value={committed.end ? toISODate(committed.end) : ""}
-            />
-          </>
-        )}
+          ) : (
+            <>
+              <input
+                type="hidden"
+                name={`${name}_start`}
+                value={committed.start ? toISODate(committed.start) : ""}
+              />
+              <input
+                type="hidden"
+                name={`${name}_end`}
+                value={committed.end ? toISODate(committed.end) : ""}
+              />
+            </>
+          ))}
         {errorText && (
           <div
             className={["wf-dp-error", classNames?.error].filter(Boolean).join(" ")}

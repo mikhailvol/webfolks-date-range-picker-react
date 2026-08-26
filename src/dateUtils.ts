@@ -201,6 +201,12 @@ export function applyDaySelection(
   return { range, completed: false, changed: false };
 }
 
+/** Single-date mode: every click selects that day as a complete "range". */
+export function applySingleDaySelection(date: Date): SelectionResult {
+  const day = stripTime(date);
+  return { range: { start: day, end: day }, completed: true, changed: true };
+}
+
 // Month grids ----------------------------------------------------------------
 
 /** Weeks of a month as rows of 7, Monday-first, padded with `null`. */

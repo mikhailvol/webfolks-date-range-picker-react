@@ -5,13 +5,17 @@ export {
   type DateRange,
   type DateRangePickerClassNames,
   type DateRangePickerProps,
+  type DateRangePickerRangeProps,
   type DateRangePickerRef,
+  type DateRangePickerSingleProps,
   type DateRangePickerStrings,
   type PopoverAlign,
   type PopoverDrop,
+  type SelectionMode,
 } from "./types";
 export {
   applyDaySelection,
+  applySingleDaySelection,
   computeBounds,
   fromISODate,
   isDateDisabled,

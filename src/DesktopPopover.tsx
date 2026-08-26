@@ -16,6 +16,8 @@ export type DesktopPopoverProps = {
   onPrev: () => void;
   onNext: () => void;
   strings: DateRangePickerStrings;
+  /** One-month layout (months={1}). */
+  singleMonth?: boolean;
   months: ReactNode;
   footer: ReactNode;
 };
@@ -32,6 +34,7 @@ export function DesktopPopover({
   onPrev,
   onNext,
   strings,
+  singleMonth,
   months,
   footer,
 }: DesktopPopoverProps) {
@@ -57,7 +60,7 @@ export function DesktopPopover({
             <path d="M30.83 32.67L21.66 23.5L30.83 14.33L28 11.5L16 23.5L28 35.5L30.83 32.67Z" />
           </svg>
         </button>
-        <div className="wf-dp-cal">{months}</div>
+        <div className={singleMonth ? "wf-dp-cal wf-dp-cal--one" : "wf-dp-cal"}>{months}</div>
         <button
           type="button"
           className="wf-dp-btn next"

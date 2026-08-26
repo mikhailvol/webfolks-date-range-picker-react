@@ -19,10 +19,15 @@ export type PopoverAlign = "left" | "center" | "right";
 /** Vertical opening direction of the desktop popover. `auto` picks by viewport space. */
 export type PopoverDrop = "down" | "up" | "auto";
 
+/** `range` — two dates (default). `single` — one date, a classic datepicker. */
+export type SelectionMode = "range" | "single";
+
 /** Every piece of UI text, overridable for i18n. */
 export type DateRangePickerStrings = {
-  /** Popover CTA + mobile header title. */
+  /** Popover CTA + mobile header title (range mode). */
   selectDates: string;
+  /** Popover CTA + mobile header title in single-date mode. */
+  selectDate: string;
   /** Shown after the separator while only a start date is selected. */
   endDate: string;
   /** aria-label of the mobile close button. */
@@ -36,10 +41,13 @@ export type DateRangePickerStrings = {
   nights: string;
   /** Default validation message for an incomplete range. */
   errorIncomplete: string;
+  /** Default validation message when no date is selected in single-date mode. */
+  errorIncompleteDate: string;
 };
 
 export const defaultStrings: DateRangePickerStrings = {
   selectDates: "Select dates",
+  selectDate: "Select date",
   endDate: "End Date",
   close: "Close",
   previousMonth: "Previous month",
@@ -47,6 +55,7 @@ export const defaultStrings: DateRangePickerStrings = {
   night: "night",
   nights: "nights",
   errorIncomplete: "Please select a date range.",
+  errorIncompleteDate: "Please select a date.",
 };
 
 /** Optional class overrides merged onto the library's own classes. */
@@ -58,22 +67,17 @@ export type DateRangePickerClassNames = Partial<{
   cta: string;
 }>;
 
-export type DateRangePickerProps = {
-  /** Controlled value. Omit (and optionally pass `defaultValue`) for uncontrolled use. */
-  value?: DateRange;
-  /** Initial value when uncontrolled. */
-  defaultValue?: DateRange;
-  /** Fires when a range is committed (complete range in instant mode; CTA press in confirm mode; `clear()`). */
-  onChange?: (range: DateRange) => void;
-  /** Fires when a start date is picked but the range is not complete yet. */
-  onPartialChange?: (range: DateRange) => void;
+type DateRangePickerBaseProps = {
   /** Fires when the popover/modal opens or closes. */
   onOpenChange?: (open: boolean) => void;
   onBlur?: FocusEventHandler<HTMLInputElement>;
 
+  /** How many months the desktop popover shows side by side. Default `2`. */
+  months?: 1 | 2;
+
   /**
    * Minimum length of the range in nights (end date exclusive).
-   * `0` allows same-day selection. Default `1`.
+   * `0` allows same-day selection. Default `1`. Ignored in single-date mode.
    */
   minNights?: number;
   /** Disable dates before today. Default `true`. */
@@ -120,12 +124,44 @@ export type DateRangePickerProps = {
   disabled?: boolean;
   placeholder?: string;
   id?: string;
-  /** Name for the two hidden `yyyy-mm-dd` inputs (`{name}_start` / `{name}_end`) for plain HTML forms. */
+  /**
+   * Name for hidden `yyyy-mm-dd` inputs for plain HTML forms:
+   * `{name}_start` / `{name}_end` in range mode, `{name}` in single mode.
+   */
   name?: string;
   className?: string;
   classNames?: DateRangePickerClassNames;
   style?: CSSProperties;
 };
+
+export type DateRangePickerRangeProps = DateRangePickerBaseProps & {
+  /** Range selection — two dates (default). */
+  mode?: "range";
+  /** Controlled value. Omit (and optionally pass `defaultValue`) for uncontrolled use. */
+  value?: DateRange;
+  /** Initial value when uncontrolled. */
+  defaultValue?: DateRange;
+  /** Fires when a range is committed (complete range in instant mode; CTA press in confirm mode; `clear()`). */
+  onChange?: (range: DateRange) => void;
+  /** Fires when a start date is picked but the range is not complete yet. */
+  onPartialChange?: (range: DateRange) => void;
+};
+
+export type DateRangePickerSingleProps = DateRangePickerBaseProps & {
+  /** Single-date selection — a classic datepicker. */
+  mode: "single";
+  /** Controlled value. Omit (and optionally pass `defaultValue`) for uncontrolled use. */
+  value?: Date | null;
+  /** Initial value when uncontrolled. */
+  defaultValue?: Date | null;
+  /**
+   * Fires when a date is committed (on selection in instant mode — the desktop
+   * popover also closes; CTA press in confirm mode; `clear()`).
+   */
+  onChange?: (date: Date | null) => void;
+};
+
+export type DateRangePickerProps = DateRangePickerRangeProps | DateRangePickerSingleProps;
 
 /** Imperative API, exposed via `ref`. */
 export type DateRangePickerRef = {

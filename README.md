@@ -2,8 +2,8 @@
 
 The [WebFolks Date Range Picker](https://github.com/mikhailvol/webfolks-date-range-picker) rebuilt as a native **React + TypeScript** component. Same UX, zero dependencies, drop it into any React or Next.js project.
 
-- **One input, two dates** — a single field holds the whole range.
-- **Desktop** — popover anchored to the input, two months side by side, smart positioning (`drop`, `align`, viewport collision handling).
+- **One input, two dates** — a single field holds the whole range. Or switch to `mode="single"` for a classic one-date picker.
+- **Desktop** — popover anchored to the input, two months side by side (or one, via `months={1}`), smart positioning (`drop`, `align`, viewport collision handling).
 - **Mobile** (<768px) — fullscreen experience: sticky header, sticky weekdays, scrollable stacked months, sticky footer with a live summary and CTA. Scrolling never accidentally selects a date.
 - **Smart range logic** — minimum nights, same-day mode, restart rules, disabled dates, past/future bounds.
 - **Commit modes** — `instant` input updates or `confirm`-on-CTA.
@@ -48,13 +48,33 @@ export function BookingDates() {
 
 Uncontrolled use works too — omit `value` and read the result from `onChange` (or pass `name` to get hidden `yyyy-mm-dd` inputs for plain HTML forms).
 
+### Single-date mode
+
+`mode="single"` turns it into a classic datepicker: the value becomes `Date | null`, every click replaces the selection, and in `instant` mode the desktop popover closes as soon as a date is picked. The mobile experience stays the same fullscreen scrollable calendar, confirmed with the CTA. `minNights` and `showNights` don't apply.
+
+```tsx
+const [date, setDate] = useState<Date | null>(null);
+
+<DateRangePicker mode="single" value={date} onChange={setDate} placeholder="Select date" />
+```
+
+### One month on desktop
+
+`months={1}` renders a compact single-month popover (mobile is unaffected):
+
+```tsx
+<DateRangePicker months={1} />
+```
+
 ## Props
 
 Every `data-wf-dp-*` attribute of the original became a typed prop:
 
 | Prop | Original attribute | Default | What it does |
 |---|---|---|---|
-| `minNights` | `data-wf-dp-min-nights` | `1` | Minimum range length in nights. `0` allows same-day selection. |
+| `mode` | — *(new)* | `"range"` | `"range"` for two dates; `"single"` for a classic one-date picker (`value` becomes `Date \| null`). |
+| `months` | — *(new)* | `2` | Months shown side by side in the desktop popover: `1` or `2`. |
+| `minNights` | `data-wf-dp-min-nights` | `1` | Minimum range length in nights. `0` allows same-day selection. Ignored in single mode. |
 | `disablePast` | `data-wf-dp-disable-past` | `true` | Disable dates before today. |
 | `maxYearsFuture` | `data-wf-dp-max-years` | `2` | How many years ahead can be selected (through the end of that month). |
 | `maxYearsPast` | `data-wf-dp-max-years-past` | `2` | Years back (only with `disablePast={false}`). |
@@ -189,14 +209,18 @@ For structural restyling, pass `classNames={{ root, input, error, popover, cta }
   locale="uk"
   strings={{
     selectDates: "Оберіть дати",
+    selectDate: "Оберіть дату",
     endDate: "Дата виїзду",
     close: "Закрити",
     night: "ніч",
     nights: "ночей",
     errorIncomplete: "Будь ласка, оберіть діапазон дат.",
+    errorIncompleteDate: "Будь ласка, оберіть дату.",
   }}
 />
 ```
+
+In single mode the CTA/title uses `strings.selectDate` and the validation message uses `strings.errorIncompleteDate`.
 
 ## Behavior notes (vs. the original Webflow library)
 

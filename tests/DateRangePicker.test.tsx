@@ -249,3 +249,64 @@ describe("DateRangePicker", () => {
     expect(getInput()).toHaveAttribute("aria-invalid", "true");
   });
 });
+
+describe("single-date mode", () => {
+  it("commits a Date on pick and closes the desktop popover", () => {
+    const onChange = vi.fn();
+    render(<DateRangePicker mode="single" onChange={onChange} />);
+    openPicker();
+    expect(screen.getByRole("button", { name: "Select date" })).toBeInTheDocument();
+    tap(cell("2026-03-20"));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const picked = onChange.mock.calls[0]![0] as Date;
+    expect(picked.getDate()).toBe(20);
+    expect(getInput()).toHaveValue("Fri, Mar 20");
+    expect(document.querySelector(".wf-dp-popover")).toBeNull(); // closes on pick
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("replaces the selection on every pick and commits via CTA in confirm mode", () => {
+    const onChange = vi.fn();
+    render(<DateRangePicker mode="single" commitMode="confirm" onChange={onChange} />);
+    openPicker();
+    tap(cell("2026-03-20"));
+    tap(cell("2026-03-25"));
+    expect(getInput()).toHaveValue("");
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Select date" }));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect((onChange.mock.calls[0]![0] as Date).getDate()).toBe(25);
+    expect(getInput()).toHaveValue("Wed, Mar 25");
+  });
+
+  it("accepts a controlled Date value and renders a single hidden input", () => {
+    render(<DateRangePicker mode="single" name="checkin" value={new Date(2026, 2, 21)} />);
+    expect(getInput()).toHaveValue("Sat, Mar 21");
+    const hidden = document.querySelector<HTMLInputElement>('input[name="checkin"]');
+    expect(hidden?.value).toBe("2026-03-21");
+    expect(document.querySelector('input[name="checkin_start"]')).toBeNull();
+  });
+});
+
+describe("months={1}", () => {
+  it("shows a single month and navigates by one", () => {
+    render(<DateRangePicker months={1} />);
+    openPicker();
+    expect(screen.getByRole("grid", { name: "March 2026" })).toBeInTheDocument();
+    expect(screen.queryByRole("grid", { name: "April 2026" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(screen.getByRole("grid", { name: "April 2026" })).toBeInTheDocument();
+    expect(screen.queryByRole("grid", { name: "March 2026" })).toBeNull();
+  });
+
+  it("still selects a range spanning navigation", () => {
+    const onChange = vi.fn();
+    render(<DateRangePicker months={1} onChange={onChange} />);
+    openPicker();
+    tap(cell("2026-03-20"));
+    fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    tap(cell("2026-04-02"));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(getInput()).toHaveValue("Fri, Mar 20 — Thu, Apr 2");
+  });
+});

@@ -84,7 +84,8 @@
   gap: 8px;
 }
 
-.wf-dp-cal--stack {
+.wf-dp-cal--stack,
+.wf-dp-cal--one {
   grid-template-columns: 1fr;
 }
 

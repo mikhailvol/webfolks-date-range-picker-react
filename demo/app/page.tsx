@@ -122,6 +122,46 @@ function Localized() {
   );
 }
 
+function SingleDate() {
+  const [date, setDate] = useState<Date | null>(null);
+  const [confirmed, setConfirmed] = useState<Date | null>(null);
+  return (
+    <section>
+      <h2>Single date (classic datepicker)</h2>
+      <p>
+        mode=&quot;single&quot; — instant pick closes the popover on desktop; the second one uses
+        confirm mode.
+      </p>
+      <div className="row">
+        <DateRangePicker mode="single" value={date} onChange={setDate} placeholder="Pick a date" />
+        <DateRangePicker
+          mode="single"
+          commitMode="confirm"
+          value={confirmed}
+          onChange={setConfirmed}
+          placeholder="Pick + confirm"
+        />
+      </div>
+      <div className="value">
+        instant: {date ? toISODate(date) : "null"} · confirm:{" "}
+        {confirmed ? toISODate(confirmed) : "null"}
+      </div>
+    </section>
+  );
+}
+
+function OneMonth() {
+  const [range, setRange] = useState<DateRange>({ start: null, end: null });
+  return (
+    <section>
+      <h2>One month on desktop</h2>
+      <p>months={"{1}"} — compact single-month popover; mobile keeps the scrollable stack.</p>
+      <DateRangePicker value={range} onChange={setRange} months={1} placeholder="Single-month popover" />
+      <div className="value">value: {show(range)}</div>
+    </section>
+  );
+}
+
 type BookingForm = { stay: DateRange };
 
 function WithReactHookForm() {
@@ -186,6 +226,8 @@ export default function Page() {
         fullscreen mobile experience.
       </p>
       <Basic />
+      <SingleDate />
+      <OneMonth />
       <ConfirmMode />
       <SameDay />
       <PastAndFormat />
