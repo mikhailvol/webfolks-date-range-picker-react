@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  DatePicker,
   DateRangePicker,
   toISODate,
   type DateRange,
@@ -127,21 +128,14 @@ function SingleDate() {
   const [confirmed, setConfirmed] = useState<Date | null>(null);
   return (
     <section>
-      <h2>Single date (classic datepicker)</h2>
+      <h2>DatePicker (classic single date)</h2>
       <p>
-        mode=&quot;single&quot; months={"{1}"} — one calendar, instant pick, closes on selection;
-        the second one uses confirm mode.
+        Its own component on the same engine — one calendar by default, instant pick closes
+        on selection; the second one uses confirm mode.
       </p>
       <div className="row">
-        <DateRangePicker
-          mode="single"
-          months={1}
-          value={date}
-          onChange={setDate}
-          placeholder="Pick a date"
-        />
-        <DateRangePicker
-          mode="single"
+        <DatePicker value={date} onChange={setDate} placeholder="Pick a date" />
+        <DatePicker
           commitMode="confirm"
           value={confirmed}
           onChange={setConfirmed}

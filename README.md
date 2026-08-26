@@ -2,7 +2,7 @@
 
 The [WebFolks Date Range Picker](https://github.com/mikhailvol/webfolks-date-range-picker) rebuilt as a native **React + TypeScript** component. Same UX, zero dependencies, drop it into any React or Next.js project.
 
-- **One input, two dates** — a single field holds the whole range. Or switch to `mode="single"` for a classic one-date picker.
+- **Two components, one engine** — `DateRangePicker` (one input, two dates) and `DatePicker` (a classic one-date picker) share the same calendar, popover, mobile sheet, and accessibility layer.
 - **Desktop** — popover anchored to the input, two months side by side (or one, via `months={1}`), smart positioning (`drop`, `align`, viewport collision handling).
 - **Mobile** (<768px) — fullscreen experience: sticky header, sticky weekdays, scrollable stacked months, sticky footer with a live summary and CTA. Scrolling never accidentally selects a date.
 - **Smart range logic** — minimum nights, same-day mode, restart rules, disabled dates, past/future bounds.
@@ -48,14 +48,16 @@ export function BookingDates() {
 
 Uncontrolled use works too — omit `value` and read the result from `onChange` (or pass `name` to get hidden `yyyy-mm-dd` inputs for plain HTML forms).
 
-### Single-date mode
+### DatePicker — classic single date
 
-`mode="single"` turns it into a classic datepicker: the value becomes `Date | null`, every click replaces the selection, and in `instant` mode the desktop popover closes as soon as a date is picked. The mobile experience stays the same fullscreen scrollable calendar, confirmed with the CTA. `minNights` and `showNights` don't apply.
+`DatePicker` is the one-date sibling: the value is `Date | null`, it shows one month by default, every click replaces the selection, and in `instant` mode the desktop popover closes as soon as a date is picked. The mobile experience is the same fullscreen scrollable calendar, confirmed with the CTA. It accepts all shared props; range-only options (`minNights`, `showNights`, `separator`, `autoClose`, `autoCloseFirst`) don't exist on it.
 
 ```tsx
+import { DatePicker } from "webfolks-date-range-picker-react";
+
 const [date, setDate] = useState<Date | null>(null);
 
-<DateRangePicker mode="single" value={date} onChange={setDate} placeholder="Select date" />
+<DatePicker value={date} onChange={setDate} placeholder="Select date" />
 ```
 
 ### One month on desktop
@@ -66,12 +68,6 @@ const [date, setDate] = useState<Date | null>(null);
 <DateRangePicker months={1} />
 ```
 
-The classic one-calendar datepicker is the combination of both:
-
-```tsx
-<DateRangePicker mode="single" months={1} value={date} onChange={setDate} />
-```
-
 For a **range** in a single calendar that closes as soon as it completes, add `autoClose`:
 
 ```tsx
@@ -80,13 +76,12 @@ For a **range** in a single calendar that closes as soon as it completes, add `a
 
 ## Props
 
-Every `data-wf-dp-*` attribute of the original became a typed prop:
+Every `data-wf-dp-*` attribute of the original became a typed prop. Props apply to both components unless marked otherwise; on `DatePicker`, `value`/`defaultValue`/`onChange` use `Date | null` instead of `DateRange`, and there is no `onPartialChange`.
 
 | Prop | Original attribute | Default | What it does |
 |---|---|---|---|
-| `mode` | — *(new)* | `"range"` | `"range"` for two dates; `"single"` for a classic one-date picker (`value` becomes `Date \| null`). |
-| `months` | — *(new)* | `2` | Months shown side by side in the desktop popover: `1` or `2`. |
-| `minNights` | `data-wf-dp-min-nights` | `1` | Minimum range length in nights. `0` allows same-day selection. Ignored in single mode. |
+| `months` | — *(new)* | `2` (`1` on `DatePicker`) | Months shown side by side in the desktop popover: `1` or `2`. |
+| `minNights` | `data-wf-dp-min-nights` | `1` | Minimum range length in nights. `0` allows same-day selection. `DateRangePicker` only. |
 | `disablePast` | `data-wf-dp-disable-past` | `true` | Disable dates before today. |
 | `maxYearsFuture` | `data-wf-dp-max-years` | `2` | How many years ahead can be selected (through the end of that month). |
 | `maxYearsPast` | `data-wf-dp-max-years-past` | `2` | Years back (only with `disablePast={false}`). |
@@ -99,7 +94,7 @@ Every `data-wf-dp-*` attribute of the original became a typed prop:
 | `align` | `data-wf-dp-align` | `"center"` | Popover alignment: `"left" \| "center" \| "right"`. |
 | `drop` | `data-wf-dp-drop` | `"down"` | Popover direction: `"down" \| "up" \| "auto"`. |
 | `autoCloseFirst` | `data-wf-dp-autoclose-first` | `false` | Desktop only: close after the first completed selection (first open only). |
-| `autoClose` | — *(new)* | `false` | Desktop only, instant mode: close on **every** completed selection. Single mode always does this. |
+| `autoClose` | — *(new)* | `false` | Desktop only, instant mode: close on **every** completed selection. `DateRangePicker` only — `DatePicker` always closes on pick. |
 | `required` | `data-wf-dp-required` | `false` | Closing without a complete range shows the error. |
 | `openOnError` | `data-wf-dp-open-on-error` | `false` | Reopen the picker when the `error` prop turns truthy (e.g. failed submit). |
 | `error` | — | — | External error: a string message, or `true` for the default text. |
@@ -123,7 +118,7 @@ const picker = useRef<DateRangePickerRef>(null);
 <button onClick={() => picker.current?.clear()}>Reset dates</button>
 ```
 
-`clear()` commits `{ start: null, end: null }` through `onChange`, so form state stays in sync — no global reset-button discovery needed.
+`clear()` commits `{ start: null, end: null }` through `onChange`, so form state stays in sync — no global reset-button discovery needed. `DatePicker` exposes the same methods via `DatePickerRef`, with `getValue(): Date | null` and `clear()` committing `null`.
 
 ## Date format tokens
 
@@ -233,7 +228,7 @@ For structural restyling, pass `classNames={{ root, input, error, popover, cta }
 />
 ```
 
-In single mode the CTA/title uses `strings.selectDate` and the validation message uses `strings.errorIncompleteDate`.
+`DatePicker` uses `strings.selectDate` for its CTA/title and `strings.errorIncompleteDate` for validation.
 
 ## Behavior notes (vs. the original Webflow library)
 

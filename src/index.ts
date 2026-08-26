@@ -1,17 +1,17 @@
 export { DateRangePicker } from "./DateRangePicker";
+export { DatePicker } from "./DatePicker";
 export {
   defaultStrings,
   type CommitMode,
+  type DatePickerProps,
+  type DatePickerRef,
   type DateRange,
   type DateRangePickerClassNames,
   type DateRangePickerProps,
-  type DateRangePickerRangeProps,
   type DateRangePickerRef,
-  type DateRangePickerSingleProps,
   type DateRangePickerStrings,
   type PopoverAlign,
   type PopoverDrop,
-  type SelectionMode,
 } from "./types";
 export {
   applyDaySelection,

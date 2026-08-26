@@ -140,6 +140,7 @@ type DateRangePickerBaseProps = {
   style?: CSSProperties;
 };
 
+/** @internal Range half of the shared engine's props. */
 export type DateRangePickerRangeProps = DateRangePickerBaseProps & {
   /** Range selection — two dates (default). */
   mode?: "range";
@@ -153,6 +154,7 @@ export type DateRangePickerRangeProps = DateRangePickerBaseProps & {
   onPartialChange?: (range: DateRange) => void;
 };
 
+/** @internal Single-date half of the shared engine's props. */
 export type DateRangePickerSingleProps = DateRangePickerBaseProps & {
   /** Single-date selection — a classic datepicker. */
   mode: "single";
@@ -167,7 +169,42 @@ export type DateRangePickerSingleProps = DateRangePickerBaseProps & {
   onChange?: (date: Date | null) => void;
 };
 
-export type DateRangePickerProps = DateRangePickerRangeProps | DateRangePickerSingleProps;
+/** @internal Union consumed by the shared PickerBase engine. */
+export type PickerBaseProps = DateRangePickerRangeProps | DateRangePickerSingleProps;
+
+/** Public props of {@link DateRangePicker} — range selection only. */
+export type DateRangePickerProps = Omit<DateRangePickerRangeProps, "mode">;
+
+/**
+ * Public props of {@link DatePicker} — a classic single-date picker.
+ * Range-only options (`minNights`, `showNights`, `separator`, `autoClose`,
+ * `autoCloseFirst`) don't apply; `months` defaults to `1`.
+ */
+export type DatePickerProps = Omit<
+  DateRangePickerBaseProps,
+  "minNights" | "showNights" | "separator" | "autoClose" | "autoCloseFirst"
+> & {
+  /** Controlled value. Omit (and optionally pass `defaultValue`) for uncontrolled use. */
+  value?: Date | null;
+  /** Initial value when uncontrolled. */
+  defaultValue?: Date | null;
+  /**
+   * Fires when a date is committed (on pick in instant mode — the desktop
+   * popover also closes; CTA press in confirm mode; `clear()`).
+   */
+  onChange?: (date: Date | null) => void;
+};
+
+/** Imperative API of {@link DatePicker}, exposed via `ref`. */
+export type DatePickerRef = {
+  open: () => void;
+  close: () => void;
+  /** Clears the selection and commits `null`. */
+  clear: () => void;
+  /** Focuses the input. */
+  focus: () => void;
+  getValue: () => Date | null;
+};
 
 /** Imperative API, exposed via `ref`. */
 export type DateRangePickerRef = {

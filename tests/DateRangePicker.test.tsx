@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { DateRangePicker } from "../src/DateRangePicker";
+import { DatePicker } from "../src/DatePicker";
 import type { DateRange } from "../src/types";
 
 // Fixed "today": Sunday, March 15, 2026. Only Date is faked so real timers
@@ -250,11 +251,12 @@ describe("DateRangePicker", () => {
   });
 });
 
-describe("single-date mode", () => {
-  it("commits a Date on pick and closes the desktop popover", () => {
+describe("DatePicker", () => {
+  it("shows one month by default, commits a Date on pick, and closes the popover", () => {
     const onChange = vi.fn();
-    render(<DateRangePicker mode="single" onChange={onChange} />);
+    render(<DatePicker onChange={onChange} />);
     openPicker();
+    expect(document.querySelectorAll(".wf-dp-month").length).toBe(1);
     expect(screen.getByRole("button", { name: "Select date" })).toBeInTheDocument();
     tap(cell("2026-03-20"));
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -265,9 +267,15 @@ describe("single-date mode", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("supports months={2}", () => {
+    render(<DatePicker months={2} />);
+    openPicker();
+    expect(document.querySelectorAll(".wf-dp-month").length).toBe(2);
+  });
+
   it("replaces the selection on every pick and commits via CTA in confirm mode", () => {
     const onChange = vi.fn();
-    render(<DateRangePicker mode="single" commitMode="confirm" onChange={onChange} />);
+    render(<DatePicker commitMode="confirm" onChange={onChange} />);
     openPicker();
     tap(cell("2026-03-20"));
     tap(cell("2026-03-25"));
@@ -280,11 +288,23 @@ describe("single-date mode", () => {
   });
 
   it("accepts a controlled Date value and renders a single hidden input", () => {
-    render(<DateRangePicker mode="single" name="checkin" value={new Date(2026, 2, 21)} />);
+    render(<DatePicker name="checkin" value={new Date(2026, 2, 21)} />);
     expect(getInput()).toHaveValue("Sat, Mar 21");
     const hidden = document.querySelector<HTMLInputElement>('input[name="checkin"]');
     expect(hidden?.value).toBe("2026-03-21");
     expect(document.querySelector('input[name="checkin_start"]')).toBeNull();
+  });
+
+  it("clear() via ref commits null and getValue reads the Date", () => {
+    const onChange = vi.fn();
+    const ref = { current: null as import("../src/types").DatePickerRef | null };
+    render(<DatePicker ref={ref} onChange={onChange} />);
+    openPicker();
+    tap(cell("2026-03-20"));
+    expect(ref.current?.getValue()?.getDate()).toBe(20);
+    act(() => ref.current?.clear());
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    expect(ref.current?.getValue()).toBeNull();
   });
 });
 
@@ -297,17 +317,6 @@ describe("months={1}", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next month" }));
     expect(screen.getByRole("grid", { name: "April 2026" })).toBeInTheDocument();
     expect(screen.queryByRole("grid", { name: "March 2026" })).toBeNull();
-  });
-
-  it("classic datepicker combo: one calendar, instant pick, closes on selection", () => {
-    const onChange = vi.fn();
-    render(<DateRangePicker mode="single" months={1} onChange={onChange} />);
-    openPicker();
-    expect(document.querySelectorAll(".wf-dp-month").length).toBe(1);
-    tap(cell("2026-03-20"));
-    expect(onChange).toHaveBeenCalledTimes(1);
-    expect(document.querySelector(".wf-dp-popover")).toBeNull();
-    expect(getInput()).toHaveValue("Fri, Mar 20");
   });
 
   it("autoClose closes a range picker on every completion", () => {
