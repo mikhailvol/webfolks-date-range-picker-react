@@ -365,6 +365,372 @@ function Themed() {
   );
 }
 
+// Playground ------------------------------------------------------------------
+
+type PlaygroundConfig = {
+  component: "range" | "single";
+  commitMode: "instant" | "confirm";
+  months: 1 | 2;
+  minNights: number;
+  showNights: boolean;
+  disablePast: boolean;
+  maxYearsFuture: number;
+  maxYearsPast: number;
+  format: string;
+  separator: string;
+  locale: string;
+  align: "left" | "center" | "right";
+  drop: "down" | "up" | "auto";
+  autoClose: boolean;
+  required: boolean;
+  placeholder: string;
+};
+
+const pgDefaults: PlaygroundConfig = {
+  component: "range",
+  commitMode: "instant",
+  months: 2,
+  minNights: 1,
+  showNights: false,
+  disablePast: true,
+  maxYearsFuture: 2,
+  maxYearsPast: 2,
+  format: "EEE, MMM d",
+  separator: " — ",
+  locale: "en",
+  align: "center",
+  drop: "down",
+  autoClose: false,
+  required: false,
+  placeholder: "Select date range",
+};
+
+function generateCode(c: PlaygroundConfig): string {
+  const isRange = c.component === "range";
+  const props: string[] = [isRange ? "value={range} onChange={setRange}" : "value={date} onChange={setDate}"];
+  const add = (cond: boolean, p: string) => cond && props.push(p);
+
+  add(c.commitMode !== "instant", `commitMode="${c.commitMode}"`);
+  add(c.months !== (isRange ? 2 : 1), `months={${c.months}}`);
+  if (isRange) {
+    add(c.minNights !== 1, `minNights={${c.minNights}}`);
+    add(c.showNights, "showNights");
+    add(c.separator !== " — ", `separator="${c.separator}"`);
+    add(c.autoClose, "autoClose");
+  }
+  add(!c.disablePast, "disablePast={false}");
+  add(!c.disablePast && c.maxYearsPast !== 2, `maxYearsPast={${c.maxYearsPast}}`);
+  add(c.maxYearsFuture !== 2, `maxYearsFuture={${c.maxYearsFuture}}`);
+  add(c.format !== "EEE, MMM d", `format="${c.format}"`);
+  add(c.locale !== "en", `locale="${c.locale}"`);
+  add(c.align !== "center", `align="${c.align}"`);
+  add(c.drop !== "down", `drop="${c.drop}"`);
+  add(c.required, "required");
+  const defaultPlaceholder = isRange ? "Select date range" : "Select date";
+  add(c.placeholder !== defaultPlaceholder && c.placeholder.trim() !== "", `placeholder="${c.placeholder}"`);
+
+  const tag = isRange ? "DateRangePicker" : "DatePicker";
+  return props.length === 1
+    ? `<${tag} ${props[0]} />`
+    : `<${tag}\n  ${props.join("\n  ")}\n/>`;
+}
+
+function Field({
+  label,
+  off,
+  check,
+  children,
+}: {
+  label: string;
+  off?: boolean;
+  check?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label className={["pg-field", check && "pg-check", off && "off"].filter(Boolean).join(" ")}>
+      {check ? children : <span>{label}</span>}
+      {check ? label : children}
+    </label>
+  );
+}
+
+function Playground() {
+  const [c, setC] = useState<PlaygroundConfig>(pgDefaults);
+  const [range, setRange] = useState(EMPTY);
+  const [date, setDate] = useState<Date | null>(null);
+  const set = <K extends keyof PlaygroundConfig>(key: K, value: PlaygroundConfig[K]) =>
+    setC((prev) => ({ ...prev, [key]: value }));
+  const isRange = c.component === "range";
+
+  const shared = {
+    commitMode: c.commitMode,
+    months: c.months,
+    disablePast: c.disablePast,
+    maxYearsFuture: c.maxYearsFuture,
+    maxYearsPast: c.maxYearsPast,
+    format: c.format,
+    locale: c.locale,
+    align: c.align,
+    drop: c.drop,
+    required: c.required,
+    placeholder: c.placeholder,
+  } as const;
+
+  return (
+    <div className="card">
+      <h3>Configure it live</h3>
+      <p className="desc">
+        Every control maps to a prop. The picker below and the generated code update as you
+        change them.
+      </p>
+
+      <div className="pg-controls">
+        <Field label="Component">
+          <select
+            value={c.component}
+            onChange={(e) => {
+              const component = e.target.value as "range" | "single";
+              setC((prev) => ({
+                ...prev,
+                component,
+                months: component === "single" ? 1 : 2,
+                placeholder: component === "single" ? "Select date" : "Select date range",
+              }));
+              setRange(EMPTY);
+              setDate(null);
+            }}
+          >
+            <option value="range">DateRangePicker</option>
+            <option value="single">DatePicker</option>
+          </select>
+        </Field>
+        <Field label="commitMode">
+          <select
+            value={c.commitMode}
+            onChange={(e) => set("commitMode", e.target.value as "instant" | "confirm")}
+          >
+            <option value="instant">instant</option>
+            <option value="confirm">confirm</option>
+          </select>
+        </Field>
+        <Field label="months">
+          <select value={c.months} onChange={(e) => set("months", Number(e.target.value) as 1 | 2)}>
+            <option value={1}>1</option>
+            <option value={2}>2</option>
+          </select>
+        </Field>
+        <Field label="minNights" off={!isRange}>
+          <input
+            type="number"
+            min={0}
+            max={30}
+            value={c.minNights}
+            onChange={(e) => set("minNights", Math.max(0, Math.min(30, Number(e.target.value) || 0)))}
+          />
+        </Field>
+        <Field label="format">
+          <input type="text" value={c.format} onChange={(e) => set("format", e.target.value)} />
+        </Field>
+        <Field label="separator" off={!isRange}>
+          <input type="text" value={c.separator} onChange={(e) => set("separator", e.target.value)} />
+        </Field>
+        <Field label="locale">
+          <select value={c.locale} onChange={(e) => set("locale", e.target.value)}>
+            <option value="en">en</option>
+            <option value="uk">uk</option>
+            <option value="de">de</option>
+            <option value="pl">pl</option>
+            <option value="fr">fr</option>
+            <option value="es">es</option>
+            <option value="ja">ja</option>
+          </select>
+        </Field>
+        <Field label="align">
+          <select value={c.align} onChange={(e) => set("align", e.target.value as PlaygroundConfig["align"])}>
+            <option value="left">left</option>
+            <option value="center">center</option>
+            <option value="right">right</option>
+          </select>
+        </Field>
+        <Field label="drop">
+          <select value={c.drop} onChange={(e) => set("drop", e.target.value as PlaygroundConfig["drop"])}>
+            <option value="down">down</option>
+            <option value="up">up</option>
+            <option value="auto">auto</option>
+          </select>
+        </Field>
+        <Field label="maxYearsFuture">
+          <input
+            type="number"
+            min={0}
+            max={10}
+            value={c.maxYearsFuture}
+            onChange={(e) => set("maxYearsFuture", Math.max(0, Math.min(10, Number(e.target.value) || 0)))}
+          />
+        </Field>
+        <Field label="maxYearsPast" off={c.disablePast}>
+          <input
+            type="number"
+            min={0}
+            max={10}
+            value={c.maxYearsPast}
+            onChange={(e) => set("maxYearsPast", Math.max(0, Math.min(10, Number(e.target.value) || 0)))}
+          />
+        </Field>
+        <Field label="placeholder">
+          <input type="text" value={c.placeholder} onChange={(e) => set("placeholder", e.target.value)} />
+        </Field>
+        <Field label="disablePast" check>
+          <input
+            type="checkbox"
+            checked={c.disablePast}
+            onChange={(e) => set("disablePast", e.target.checked)}
+          />
+        </Field>
+        <Field label="showNights" check off={!isRange}>
+          <input
+            type="checkbox"
+            checked={c.showNights}
+            onChange={(e) => set("showNights", e.target.checked)}
+          />
+        </Field>
+        <Field label="autoClose" check off={!isRange}>
+          <input
+            type="checkbox"
+            checked={c.autoClose}
+            onChange={(e) => set("autoClose", e.target.checked)}
+          />
+        </Field>
+        <Field label="required" check>
+          <input
+            type="checkbox"
+            checked={c.required}
+            onChange={(e) => set("required", e.target.checked)}
+          />
+        </Field>
+      </div>
+
+      <div className="pg-live">
+        {isRange ? (
+          <DateRangePicker
+            key="range"
+            value={range}
+            onChange={setRange}
+            minNights={c.minNights}
+            showNights={c.showNights}
+            separator={c.separator}
+            autoClose={c.autoClose}
+            {...shared}
+          />
+        ) : (
+          <DatePicker key="single" value={date} onChange={setDate} {...shared} />
+        )}
+        <button
+          type="button"
+          className="demo-btn"
+          onClick={() => {
+            setRange(EMPTY);
+            setDate(null);
+          }}
+        >
+          Clear value
+        </button>
+      </div>
+
+      <pre>
+        <code>{generateCode(c)}</code>
+      </pre>
+      <span className="value">
+        {isRange ? `value: ${showRange(range)}` : `value: ${showDate(date)}`}
+      </span>
+    </div>
+  );
+}
+
+// Props reference --------------------------------------------------------------
+
+type PropRow = {
+  prop: string;
+  type: string;
+  def?: string;
+  desc: string;
+  rangeOnly?: boolean;
+};
+
+const PROP_ROWS: PropRow[] = [
+  { prop: "value", type: "DateRange · Date | null", desc: "Controlled value — DateRange on the range picker, Date | null on DatePicker." },
+  { prop: "defaultValue", type: "same as value", desc: "Initial value when uncontrolled." },
+  { prop: "onChange", type: "(value) => void", desc: "Fires on commit: completed selection in instant mode, CTA press in confirm mode, clear()." },
+  { prop: "onPartialChange", type: "(range) => void", desc: "A start date was picked but the range isn't complete yet.", rangeOnly: true },
+  { prop: "onOpenChange", type: "(open) => void", desc: "Popover or mobile sheet opened / closed." },
+  { prop: "minNights", type: "number", def: "1", desc: "Minimum range length in nights; 0 allows same-day selection.", rangeOnly: true },
+  { prop: "disablePast", type: "boolean", def: "true", desc: "Disable dates before today." },
+  { prop: "maxYearsFuture", type: "number", def: "2", desc: "Selectable window into the future, through the end of that month." },
+  { prop: "maxYearsPast", type: "number", def: "2", desc: "Selectable window into the past (only with disablePast false)." },
+  { prop: "minDate / maxDate", type: "Date", desc: "Exact bounds; override the year-based window." },
+  { prop: "format", type: "string", def: '"EEE, MMM d"', desc: "Display pattern — YYYY, MMMM, MMM, MM, M, DD, D, EEEE, EEE tokens." },
+  { prop: "separator", type: "string", def: '" — "', desc: "Text between start and end dates.", rangeOnly: true },
+  { prop: "locale", type: "string", def: '"en"', desc: "BCP-47 tag for month and weekday names (Intl)." },
+  { prop: "showNights", type: "boolean", def: "false", desc: "Append “(n nights)” to the footer summary.", rangeOnly: true },
+  { prop: "commitMode", type: '"instant" | "confirm"', def: '"instant"', desc: "Update on every click, or only on the CTA." },
+  { prop: "months", type: "1 | 2", def: "2 · 1", desc: "Months shown side by side on desktop (DatePicker defaults to 1)." },
+  { prop: "align", type: '"left" | "center" | "right"', def: '"center"', desc: "Horizontal popover alignment relative to the input." },
+  { prop: "drop", type: '"down" | "up" | "auto"', def: '"down"', desc: "Popover direction; auto flips up when space below runs out." },
+  { prop: "autoCloseFirst", type: "boolean", def: "false", desc: "Desktop: close after the first completed selection (first open only).", rangeOnly: true },
+  { prop: "autoClose", type: "boolean", def: "false", desc: "Desktop, instant mode: close on every completed selection. DatePicker always does this.", rangeOnly: true },
+  { prop: "required", type: "boolean", def: "false", desc: "Closing without a complete selection shows the error." },
+  { prop: "openOnError", type: "boolean", def: "false", desc: "Reopen the picker when the error prop turns truthy (e.g. failed submit)." },
+  { prop: "error", type: "string | boolean", desc: "External error from your form library; a string becomes the message." },
+  { prop: "strings", type: "Partial<Strings>", def: "English", desc: "Override any UI text — CTA, header, end-date hint, nights, error messages." },
+  { prop: "classNames", type: "{ root, input, error, popover, cta }", desc: "Class overrides appended to the library's own classes." },
+  { prop: "name", type: "string", desc: "Hidden yyyy-mm-dd inputs for plain HTML forms ({name}_start/{name}_end, or {name} on DatePicker)." },
+  { prop: "disabled · placeholder · id · className · style · onBlur", type: "standard", desc: "Usual input concerns, passed through." },
+];
+
+function PropsReference() {
+  return (
+    <div className="card" id="props">
+      <h3>All props</h3>
+      <p className="desc">
+        Shared by both components unless marked <span className="badge">range only</span>. Full
+        JSDoc ships with the TypeScript types, so your editor shows all of this inline.
+      </p>
+      <div className="props-wrap">
+        <table className="props">
+          <thead>
+            <tr>
+              <th>Prop</th>
+              <th>Type</th>
+              <th>Default</th>
+              <th>What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PROP_ROWS.map((r) => (
+              <tr key={r.prop}>
+                <td>
+                  <code>{r.prop}</code>
+                  {r.rangeOnly && <span className="badge">range only</span>}
+                </td>
+                <td>
+                  <code>{r.type}</code>
+                </td>
+                <td>{r.def ? <code>{r.def}</code> : "—"}</td>
+                <td>{r.desc}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="desc" style={{ marginTop: 16, marginBottom: 0 }}>
+        Imperative <code>ref</code> on both components: <code>open()</code>, <code>close()</code>,{" "}
+        <code>clear()</code>, <code>focus()</code>, <code>getValue()</code>. Theming: override the{" "}
+        <code>--wf-dp-*</code> CSS variables (see the themed example above).
+      </p>
+    </div>
+  );
+}
+
 // Page ------------------------------------------------------------------------
 
 export default function Page() {
@@ -378,7 +744,8 @@ export default function Page() {
         </p>
         <div className="hero-links">
           <a href="https://github.com/mikhailvol/webfolks-date-range-picker-react">GitHub</a>
-          <a href="https://github.com/mikhailvol/webfolks-date-range-picker-react#props">Props reference</a>
+          <a href="#playground">Playground</a>
+          <a href="#props">All props</a>
         </div>
         <code className="install">npm install github:mikhailvol/webfolks-date-range-picker-react</code>
         <p className="hint">
@@ -386,6 +753,11 @@ export default function Page() {
           months.
         </p>
       </header>
+
+      <section className="group" id="playground">
+        <h2>Playground</h2>
+        <Playground />
+      </section>
 
       <section className="group">
         <h2>Range picker</h2>
@@ -415,6 +787,11 @@ export default function Page() {
         <h2>Localization &amp; theming</h2>
         <Localized />
         <Themed />
+      </section>
+
+      <section className="group">
+        <h2>Reference</h2>
+        <PropsReference />
       </section>
 
       <footer>
