@@ -208,6 +208,12 @@ Override the CSS variables (same names as the original library) anywhere in your
 
 For structural restyling, pass `classNames={{ root, input, error, popover, cta }}` — your classes are appended to the library's, or restyle the stable `wf-dp-*` class names directly.
 
+**Scoped themes:** the popover/mobile sheet renders in a portal attached to `<body>`, so a variable override scoped to a wrapper element won't reach it. Either override on `:root` (applies everywhere), or put your theme class on both the field and the popover:
+
+```tsx
+<DateRangePicker className="teal-theme" classNames={{ popover: "teal-theme" }} />
+```
+
 ## i18n
 
 `locale` localizes month and weekday names via `Intl`. The remaining UI text is overridable:
