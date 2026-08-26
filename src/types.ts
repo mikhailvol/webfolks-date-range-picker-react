@@ -107,6 +107,12 @@ type DateRangePickerBaseProps = {
   drop?: PopoverDrop;
   /** Desktop only: close automatically after the first completed selection (first open only). Default `false`. */
   autoCloseFirst?: boolean;
+  /**
+   * Desktop only, instant mode: close automatically every time a selection
+   * completes (not just on the first open, unlike `autoCloseFirst`).
+   * Single-date mode already behaves this way. Default `false`.
+   */
+  autoClose?: boolean;
   /** A complete range is required; closing without one shows the error. Default `false`. */
   required?: boolean;
   /** Open the picker when the `error` prop transitions to truthy (e.g. on failed form submit). Default `false`. */

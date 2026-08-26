@@ -66,6 +66,18 @@ const [date, setDate] = useState<Date | null>(null);
 <DateRangePicker months={1} />
 ```
 
+The classic one-calendar datepicker is the combination of both:
+
+```tsx
+<DateRangePicker mode="single" months={1} value={date} onChange={setDate} />
+```
+
+For a **range** in a single calendar that closes as soon as it completes, add `autoClose`:
+
+```tsx
+<DateRangePicker months={1} autoClose value={range} onChange={setRange} />
+```
+
 ## Props
 
 Every `data-wf-dp-*` attribute of the original became a typed prop:
@@ -87,6 +99,7 @@ Every `data-wf-dp-*` attribute of the original became a typed prop:
 | `align` | `data-wf-dp-align` | `"center"` | Popover alignment: `"left" \| "center" \| "right"`. |
 | `drop` | `data-wf-dp-drop` | `"down"` | Popover direction: `"down" \| "up" \| "auto"`. |
 | `autoCloseFirst` | `data-wf-dp-autoclose-first` | `false` | Desktop only: close after the first completed selection (first open only). |
+| `autoClose` | — *(new)* | `false` | Desktop only, instant mode: close on **every** completed selection. Single mode always does this. |
 | `required` | `data-wf-dp-required` | `false` | Closing without a complete range shows the error. |
 | `openOnError` | `data-wf-dp-open-on-error` | `false` | Reopen the picker when the `error` prop turns truthy (e.g. failed submit). |
 | `error` | — | — | External error: a string message, or `true` for the default text. |

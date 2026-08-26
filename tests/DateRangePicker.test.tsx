@@ -299,6 +299,34 @@ describe("months={1}", () => {
     expect(screen.queryByRole("grid", { name: "March 2026" })).toBeNull();
   });
 
+  it("classic datepicker combo: one calendar, instant pick, closes on selection", () => {
+    const onChange = vi.fn();
+    render(<DateRangePicker mode="single" months={1} onChange={onChange} />);
+    openPicker();
+    expect(document.querySelectorAll(".wf-dp-month").length).toBe(1);
+    tap(cell("2026-03-20"));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".wf-dp-popover")).toBeNull();
+    expect(getInput()).toHaveValue("Fri, Mar 20");
+  });
+
+  it("autoClose closes a range picker on every completion", () => {
+    const onChange = vi.fn();
+    render(<DateRangePicker months={1} autoClose onChange={onChange} />);
+    openPicker();
+    tap(cell("2026-03-20"));
+    expect(document.querySelector(".wf-dp-popover")).not.toBeNull(); // partial stays open
+    tap(cell("2026-03-25"));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".wf-dp-popover")).toBeNull();
+    // Unlike autoCloseFirst, it also closes on later opens.
+    openPicker();
+    tap(cell("2026-03-27"));
+    tap(cell("2026-03-30"));
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(document.querySelector(".wf-dp-popover")).toBeNull();
+  });
+
   it("still selects a range spanning navigation", () => {
     const onChange = vi.fn();
     render(<DateRangePicker months={1} onChange={onChange} />);

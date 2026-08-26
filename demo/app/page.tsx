@@ -129,11 +129,17 @@ function SingleDate() {
     <section>
       <h2>Single date (classic datepicker)</h2>
       <p>
-        mode=&quot;single&quot; — instant pick closes the popover on desktop; the second one uses
-        confirm mode.
+        mode=&quot;single&quot; months={"{1}"} — one calendar, instant pick, closes on selection;
+        the second one uses confirm mode.
       </p>
       <div className="row">
-        <DateRangePicker mode="single" value={date} onChange={setDate} placeholder="Pick a date" />
+        <DateRangePicker
+          mode="single"
+          months={1}
+          value={date}
+          onChange={setDate}
+          placeholder="Pick a date"
+        />
         <DateRangePicker
           mode="single"
           commitMode="confirm"
@@ -152,12 +158,27 @@ function SingleDate() {
 
 function OneMonth() {
   const [range, setRange] = useState<DateRange>({ start: null, end: null });
+  const [auto, setAuto] = useState<DateRange>({ start: null, end: null });
   return (
     <section>
       <h2>One month on desktop</h2>
-      <p>months={"{1}"} — compact single-month popover; mobile keeps the scrollable stack.</p>
-      <DateRangePicker value={range} onChange={setRange} months={1} placeholder="Single-month popover" />
-      <div className="value">value: {show(range)}</div>
+      <p>
+        months={"{1}"} — compact single-month popover; the second adds autoClose, so a
+        completed range closes it instantly. Mobile keeps the scrollable stack.
+      </p>
+      <div className="row">
+        <DateRangePicker value={range} onChange={setRange} months={1} placeholder="Single-month popover" />
+        <DateRangePicker
+          value={auto}
+          onChange={setAuto}
+          months={1}
+          autoClose
+          placeholder="Range, closes on completion"
+        />
+      </div>
+      <div className="value">
+        value: {show(range)} · autoClose: {show(auto)}
+      </div>
     </section>
   );
 }

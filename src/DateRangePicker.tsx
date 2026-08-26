@@ -76,6 +76,7 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
       align = "center",
       drop = "down",
       autoCloseFirst = false,
+      autoClose = false,
       required = false,
       openOnError = false,
       error,
@@ -285,11 +286,13 @@ export const DateRangePicker = forwardRef<DateRangePickerRef, DateRangePickerPro
         }
       } else if (commitMode === "instant") {
         commitRange(result.range);
-        // A classic datepicker closes on pick; ranges only via autoCloseFirst.
+        // A classic datepicker closes on pick; ranges close via autoClose
+        // (every completion) or autoCloseFirst (first open only).
         const shouldClose =
-          mode === "single"
-            ? !isMobile
-            : autoCloseFirst && openCountRef.current === 1 && !isMobile;
+          !isMobile &&
+          (mode === "single" ||
+            autoClose ||
+            (autoCloseFirst && openCountRef.current === 1));
         if (shouldClose) {
           closePicker(true);
           return;
