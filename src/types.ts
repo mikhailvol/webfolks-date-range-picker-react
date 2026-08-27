@@ -99,6 +99,13 @@ type DateRangePickerBaseProps = {
   locale?: string;
   /** Append "(n nights)" to the footer summary once the range completes. Default `false`. */
   showNights?: boolean;
+  /**
+   * Show the selected dates in the calendar footer. Default `true`.
+   * With `false`, the footer shows only the prompt — plus the nights count
+   * when `showNights` is on (e.g. "3 nights" without the date range).
+   * The input text is unaffected.
+   */
+  showFooterDates?: boolean;
   /** See {@link CommitMode}. Default `"instant"`. */
   commitMode?: CommitMode;
   /** Desktop popover alignment. Default `"center"`. */

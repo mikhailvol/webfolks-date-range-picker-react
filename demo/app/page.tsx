@@ -79,6 +79,26 @@ function ConfirmRange() {
   );
 }
 
+function NightsOnlyFooter() {
+  const [range, setRange] = useState(EMPTY);
+  return (
+    <Example
+      title="Nights-only footer"
+      description="showFooterDates={false} keeps the selected dates out of the calendar footer; with showNights on, it reads just “3 nights”. The input text is unaffected."
+      code={`<DateRangePicker showFooterDates={false} showNights ... />`}
+      value={`value: ${showRange(range)}`}
+    >
+      <DateRangePicker
+        value={range}
+        onChange={setRange}
+        showFooterDates={false}
+        showNights
+        placeholder="Footer shows nights only"
+      />
+    </Example>
+  );
+}
+
 function NightRules() {
   const [sameDay, setSameDay] = useState(EMPTY);
   const [week, setWeek] = useState(EMPTY);
@@ -383,6 +403,7 @@ type PlaygroundConfig = {
   drop: "down" | "up" | "auto";
   autoClose: boolean;
   required: boolean;
+  showFooterDates: boolean;
   placeholder: string;
 };
 
@@ -402,6 +423,7 @@ const pgDefaults: PlaygroundConfig = {
   drop: "down",
   autoClose: false,
   required: false,
+  showFooterDates: true,
   placeholder: "Select date range",
 };
 
@@ -426,6 +448,7 @@ function generateCode(c: PlaygroundConfig): string {
   add(c.align !== "center", `align="${c.align}"`);
   add(c.drop !== "down", `drop="${c.drop}"`);
   add(c.required, "required");
+  add(!c.showFooterDates, "showFooterDates={false}");
   const defaultPlaceholder = isRange ? "Select date range" : "Select date";
   add(c.placeholder !== defaultPlaceholder && c.placeholder.trim() !== "", `placeholder="${c.placeholder}"`);
 
@@ -473,6 +496,7 @@ function Playground() {
     align: c.align,
     drop: c.drop,
     required: c.required,
+    showFooterDates: c.showFooterDates,
     placeholder: c.placeholder,
   } as const;
 
@@ -608,6 +632,13 @@ function Playground() {
             onChange={(e) => set("required", e.target.checked)}
           />
         </Field>
+        <Field label="showFooterDates" check>
+          <input
+            type="checkbox"
+            checked={c.showFooterDates}
+            onChange={(e) => set("showFooterDates", e.target.checked)}
+          />
+        </Field>
       </div>
 
       <div className="pg-live">
@@ -672,6 +703,7 @@ const PROP_ROWS: PropRow[] = [
   { prop: "separator", type: "string", def: '" — "', desc: "Text between start and end dates.", rangeOnly: true },
   { prop: "locale", type: "string", def: '"en"', desc: "BCP-47 tag for month and weekday names (Intl)." },
   { prop: "showNights", type: "boolean", def: "false", desc: "Append “(n nights)” to the footer summary.", rangeOnly: true },
+  { prop: "showFooterDates", type: "boolean", def: "true", desc: "Show the selected dates in the calendar footer. Off + showNights = a nights-only footer; the input is unaffected." },
   { prop: "commitMode", type: '"instant" | "confirm"', def: '"instant"', desc: "Update on every click, or only on the CTA." },
   { prop: "months", type: "1 | 2", def: "2 · 1", desc: "Months shown side by side on desktop (DatePicker defaults to 1)." },
   { prop: "align", type: '"left" | "center" | "right"', def: '"center"', desc: "Horizontal popover alignment relative to the input." },
@@ -763,6 +795,7 @@ export default function Page() {
         <h2>Range picker</h2>
         <DefaultRange />
         <ConfirmRange />
+        <NightsOnlyFooter />
         <NightRules />
         <PastAndFormat />
         <ExactBounds />

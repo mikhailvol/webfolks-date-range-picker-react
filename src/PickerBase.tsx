@@ -76,6 +76,7 @@ export const PickerBase = forwardRef<DateRangePickerRef, PickerBaseProps>(
       separator = " — ",
       locale = "en",
       showNights = false,
+      showFooterDates = true,
       commitMode = "instant",
       align = "center",
       drop = "down",
@@ -207,19 +208,23 @@ export const PickerBase = forwardRef<DateRangePickerRef, PickerBaseProps>(
             ? formatPartial(draft.start)
             : "";
 
+    const nightsLabel = complete
+      ? `${nightsBetween(draft.start!, draft.end!)} ${
+          nightsBetween(draft.start!, draft.end!) === 1 ? strings.night : strings.nights
+        }`
+      : "";
     const footerSummary =
       mode === "single"
-        ? draft.start
+        ? draft.start && showFooterDates
           ? fmt(draft.start)
           : strings.selectDates
         : complete
-          ? formatRange(draft) +
-            (showNights
-              ? ` (${nightsBetween(draft.start!, draft.end!)} ${
-                  nightsBetween(draft.start!, draft.end!) === 1 ? strings.night : strings.nights
-                })`
-              : "")
-          : draft.start
+          ? showFooterDates
+            ? formatRange(draft) + (showNights ? ` (${nightsLabel})` : "")
+            : showNights
+              ? nightsLabel
+              : ""
+          : draft.start && showFooterDates
             ? formatPartial(draft.start)
             : strings.selectDates;
 

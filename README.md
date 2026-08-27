@@ -90,6 +90,7 @@ Every `data-wf-dp-*` attribute of the original became a typed prop. Props apply 
 | `separator` | `data-wf-dp-separator` | `" — "` | Text between start and end dates. |
 | `locale` | `data-wf-dp-locale` | `"en"` | BCP-47 tag for month/weekday names (`"uk"`, `"de"`, `"pl"`, …). |
 | `showNights` | `data-wf-dp-show-nights` | `false` | Append "(n nights)" to the footer summary. |
+| `showFooterDates` | — *(new)* | `true` | Show the selected dates in the calendar footer. With `false` + `showNights`, the footer shows only "3 nights". The input is unaffected. |
 | `commitMode` | `data-wf-dp-commit-mode` | `"instant"` | `"instant"` updates on every click; `"confirm"` commits on the CTA. |
 | `align` | `data-wf-dp-align` | `"center"` | Popover alignment: `"left" \| "center" \| "right"`. |
 | `drop` | `data-wf-dp-drop` | `"down"` | Popover direction: `"down" \| "up" \| "auto"`. |

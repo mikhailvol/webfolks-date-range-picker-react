@@ -244,6 +244,28 @@ describe("DateRangePicker", () => {
     expect(end?.value).toBe("2026-03-25");
   });
 
+  it("showFooterDates={false} hides dates in the footer but keeps the nights count", () => {
+    render(<DateRangePicker showFooterDates={false} showNights />);
+    openPicker();
+    const footer = document.querySelector(".wf-dp-footer-left")!;
+    expect(footer).toHaveTextContent("Select dates");
+    tap(cell("2026-03-20"));
+    // Partial selection: no dates leak into the footer, prompt stays.
+    expect(footer).toHaveTextContent("Select dates");
+    tap(cell("2026-03-23"));
+    expect(footer.textContent).toBe("3 nights");
+    // The input still shows the formatted range.
+    expect(getInput()).toHaveValue("Fri, Mar 20 — Mon, Mar 23");
+  });
+
+  it("showFooterDates={false} without showNights leaves the footer empty when complete", () => {
+    render(<DateRangePicker showFooterDates={false} />);
+    openPicker();
+    tap(cell("2026-03-20"));
+    tap(cell("2026-03-23"));
+    expect(document.querySelector(".wf-dp-footer-left")!.textContent).toBe("");
+  });
+
   it("shows an external error message", () => {
     render(<DateRangePicker error="Dates are required" />);
     expect(screen.getByRole("alert")).toHaveTextContent("Dates are required");
