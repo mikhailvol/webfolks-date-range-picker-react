@@ -755,7 +755,9 @@ function PropsReference() {
             {PROP_ROWS.map((r) => (
               <tr key={r.prop}>
                 <td>
-                  <code>{r.prop}</code>
+                  {r.prop.split(/ \/ | · /).map((name) => (
+                    <code key={name}>{name}</code>
+                  ))}
                   {r.rangeOnly && <span className="badge">range only</span>}
                 </td>
                 <td>

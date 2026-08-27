@@ -337,7 +337,18 @@ table.props {
 }
 
 .props td:first-child {
-  white-space: nowrap;
+  max-width: 150px;
+}
+
+.props td:first-child code {
+  display: inline-block;
+  margin: 0 4px 4px 0;
+}
+
+.props td .badge {
+  display: block;
+  width: fit-content;
+  margin: 2px 0 0;
 }
 
 .props code {
