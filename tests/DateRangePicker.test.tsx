@@ -266,6 +266,18 @@ describe("DateRangePicker", () => {
     expect(document.querySelector(".wf-dp-footer-left")!.textContent).toBe("");
   });
 
+  it("footerFormat formats footer dates independently of the input", () => {
+    render(<DateRangePicker footerFormat="D MMM" />);
+    openPicker();
+    const footer = document.querySelector(".wf-dp-footer-left")!;
+    tap(cell("2026-03-20"));
+    expect(footer.textContent).toBe("20 Mar — End Date");
+    tap(cell("2026-03-23"));
+    expect(footer.textContent).toBe("20 Mar — 23 Mar");
+    // Input keeps the default format.
+    expect(getInput()).toHaveValue("Fri, Mar 20 — Mon, Mar 23");
+  });
+
   it("shows an external error message", () => {
     render(<DateRangePicker error="Dates are required" />);
     expect(screen.getByRole("alert")).toHaveTextContent("Dates are required");

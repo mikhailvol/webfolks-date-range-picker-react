@@ -121,9 +121,9 @@ function PastAndFormat() {
   return (
     <Example
       title="Past dates and custom format"
-      description="Open the past window with disablePast={false}, and shape the display with format and separator tokens."
+      description="Open the past window with disablePast={false}, and shape the display with format and separator tokens. footerFormat gives the calendar footer its own, shorter pattern."
       code={`<DateRangePicker disablePast={false} maxYearsPast={1}
-  format="DD MMM YYYY" separator=" to " ... />`}
+  format="DD MMM YYYY" footerFormat="D MMM" separator=" to " ... />`}
       value={`value: ${showRange(range)}`}
     >
       <DateRangePicker
@@ -132,6 +132,7 @@ function PastAndFormat() {
         disablePast={false}
         maxYearsPast={1}
         format="DD MMM YYYY"
+        footerFormat="D MMM"
         separator=" to "
         placeholder="Past enabled, custom format"
       />
@@ -397,6 +398,7 @@ type PlaygroundConfig = {
   maxYearsFuture: number;
   maxYearsPast: number;
   format: string;
+  footerFormat: string;
   separator: string;
   locale: string;
   align: "left" | "center" | "right";
@@ -417,6 +419,7 @@ const pgDefaults: PlaygroundConfig = {
   maxYearsFuture: 2,
   maxYearsPast: 2,
   format: "EEE, MMM d",
+  footerFormat: "",
   separator: " — ",
   locale: "en",
   align: "center",
@@ -444,6 +447,7 @@ function generateCode(c: PlaygroundConfig): string {
   add(!c.disablePast && c.maxYearsPast !== 2, `maxYearsPast={${c.maxYearsPast}}`);
   add(c.maxYearsFuture !== 2, `maxYearsFuture={${c.maxYearsFuture}}`);
   add(c.format !== "EEE, MMM d", `format="${c.format}"`);
+  add(c.footerFormat.trim() !== "", `footerFormat="${c.footerFormat}"`);
   add(c.locale !== "en", `locale="${c.locale}"`);
   add(c.align !== "center", `align="${c.align}"`);
   add(c.drop !== "down", `drop="${c.drop}"`);
@@ -492,6 +496,7 @@ function Playground() {
     maxYearsFuture: c.maxYearsFuture,
     maxYearsPast: c.maxYearsPast,
     format: c.format,
+    footerFormat: c.footerFormat.trim() || undefined,
     locale: c.locale,
     align: c.align,
     drop: c.drop,
@@ -554,6 +559,14 @@ function Playground() {
         </Field>
         <Field label="format">
           <input type="text" value={c.format} onChange={(e) => set("format", e.target.value)} />
+        </Field>
+        <Field label="footerFormat">
+          <input
+            type="text"
+            placeholder="= format"
+            value={c.footerFormat}
+            onChange={(e) => set("footerFormat", e.target.value)}
+          />
         </Field>
         <Field label="separator" off={!isRange}>
           <input type="text" value={c.separator} onChange={(e) => set("separator", e.target.value)} />
@@ -700,6 +713,7 @@ const PROP_ROWS: PropRow[] = [
   { prop: "maxYearsPast", type: "number", def: "2", desc: "Selectable window into the past (only with disablePast false)." },
   { prop: "minDate / maxDate", type: "Date", desc: "Exact bounds; override the year-based window." },
   { prop: "format", type: "string", def: '"EEE, MMM d"', desc: "Display pattern — YYYY, MMMM, MMM, MM, M, DD, D, EEEE, EEE tokens." },
+  { prop: "footerFormat", type: "string", def: "format", desc: "Separate pattern for the dates in the calendar footer; the input always uses format." },
   { prop: "separator", type: "string", def: '" — "', desc: "Text between start and end dates.", rangeOnly: true },
   { prop: "locale", type: "string", def: '"en"', desc: "BCP-47 tag for month and weekday names (Intl)." },
   { prop: "showNights", type: "boolean", def: "false", desc: "Append “(n nights)” to the footer summary.", rangeOnly: true },

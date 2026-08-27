@@ -73,6 +73,7 @@ export const PickerBase = forwardRef<DateRangePickerRef, PickerBaseProps>(
       minDate,
       maxDate,
       format = "EEE, MMM d",
+      footerFormat,
       separator = " — ",
       locale = "en",
       showNights = false,
@@ -195,6 +196,12 @@ export const PickerBase = forwardRef<DateRangePickerRef, PickerBaseProps>(
     const formatRange = (r: DateRange) =>
       r.start && r.end ? `${fmt(r.start)}${separator}${fmt(r.end)}` : "";
     const formatPartial = (start: Date) => `${fmt(start)}${separator}${strings.endDate}`;
+    // Footer dates may use their own pattern; the input always uses `format`.
+    const fmtFooter = (d: Date) => formatWithPattern(d, footerFormat ?? format, resolvedLocale);
+    const formatFooterRange = (r: DateRange) =>
+      r.start && r.end ? `${fmtFooter(r.start)}${separator}${fmtFooter(r.end)}` : "";
+    const formatFooterPartial = (start: Date) =>
+      `${fmtFooter(start)}${separator}${strings.endDate}`;
 
     const displaySource = commitMode === "instant" ? draft : committed;
     const displayValue =
@@ -216,16 +223,16 @@ export const PickerBase = forwardRef<DateRangePickerRef, PickerBaseProps>(
     const footerSummary =
       mode === "single"
         ? draft.start && showFooterDates
-          ? fmt(draft.start)
+          ? fmtFooter(draft.start)
           : strings.selectDates
         : complete
           ? showFooterDates
-            ? formatRange(draft) + (showNights ? ` (${nightsLabel})` : "")
+            ? formatFooterRange(draft) + (showNights ? ` (${nightsLabel})` : "")
             : showNights
               ? nightsLabel
               : ""
           : draft.start && showFooterDates
-            ? formatPartial(draft.start)
+            ? formatFooterPartial(draft.start)
             : strings.selectDates;
 
     // Error ---------------------------------------------------------------

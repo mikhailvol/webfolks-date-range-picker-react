@@ -87,6 +87,7 @@ Every `data-wf-dp-*` attribute of the original became a typed prop. Props apply 
 | `maxYearsPast` | `data-wf-dp-max-years-past` | `2` | Years back (only with `disablePast={false}`). |
 | `minDate` / `maxDate` | — *(new)* | — | Exact bounds; override the year-based window. |
 | `format` | `data-wf-dp-format` | `"EEE, MMM d"` | Display pattern (tokens below). |
+| `footerFormat` | — *(new)* | `format` | Separate pattern for the dates in the calendar footer; the input always uses `format`. |
 | `separator` | `data-wf-dp-separator` | `" — "` | Text between start and end dates. |
 | `locale` | `data-wf-dp-locale` | `"en"` | BCP-47 tag for month/weekday names (`"uk"`, `"de"`, `"pl"`, …). |
 | `showNights` | `data-wf-dp-show-nights` | `false` | Append "(n nights)" to the footer summary. |

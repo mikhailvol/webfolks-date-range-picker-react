@@ -93,6 +93,12 @@ type DateRangePickerBaseProps = {
 
   /** Display format pattern, e.g. `"EEE, MMM d"`, `"YYYY-MM-DD"`. Default `"EEE, MMM d"`. */
   format?: string;
+  /**
+   * Separate format pattern for the dates in the calendar footer (same
+   * tokens as `format`). Falls back to `format` when unset. The input text
+   * always uses `format`.
+   */
+  footerFormat?: string;
   /** Text between the start and end dates. Default `" — "`. */
   separator?: string;
   /** BCP-47 locale for month/weekday names, e.g. `"en"`, `"uk"`, `"de"`. Default `"en"`. */
